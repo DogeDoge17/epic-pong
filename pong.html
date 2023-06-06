@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body style="background-color:#323232;">	
+	<canvas id="canvas" width="400px" height="400px" style="border:5px solid white; left: 50%; top:50%; position:absolute; transform:translate(-50%, -50%);"></canvas>
+	<div id="ActionConsole" style="color:white;"></div>
+</body>
+
+	<script>
+	//the rectanlge class---
+	class Rectangle {
+		
+		constructor(x, y, width, height) {
+			this.x = x;
+    		this.y = y;
+			this.height = height;
+    		this.width = width;
+  		}
+	}
+	//---
+	
+	//the rectangle collision
+	function RectVsRect(/*Rectangle*/r1, /*Rectangle*/r2)
+	{
+		//idk i took it from https://github.com/OneLoneCoder/Javidx9/blob/master/PixelGameEngine/SmallerProjects/OneLoneCoder_PGE_Rectangles.cpp figure it out yourself
+		return (r1.x < r2.x + r2.width && r1.x + r1.width > r2.x && r1.y < r2.y + r2.height && r1.y + r1.height > r2.y);
+	}
+	//---
+		
+	</script>
+	
+<script>
+	
+	
+	//the canvas element
+	var canvas = document.getElementById("canvas");
+	//the canvas context
+	var ctx = canvas.getContext("2d");	
+	
+	//the game uptime
+	var timer = 0;
+	
+	//the left paddle y position
+	var y1 = 40;
+	//the right paddle position
+	var y2 = 40;
+	
+	//the ball struct
+	var ball ={
+		//the ball's rectangle
+		rect: new Rectangle(100,100,5,5),
+		//the horizontal direction of the ball (1 for right -1 for left)
+		xDir: 1,
+		//the vertical direction of the ball (-1 for up 1 for down)
+		yDir: 1,
+	}
+	
+	//what keys are being pressed
+	var state = {
+    	keys: {}
+	};
+
+	//	how many words are in the console
+	var consoleItems = 0;
+	
+	//how fast the paddles show move vertically
+	var moveSpeed = 4;
+	
+	//the left score
+	var ls = 0;
+	//the right score
+	var rs = 0;
+	
+	//Draws rectangles
+	function DrawRect(/*Rectangle*/rect, /*String*/strokeColor, /*String*/fillColor)
+	{
+		ctx.beginPath(rect.x, rect.y, rect.width, rect.height, strokeColor,fillColor);
+		ctx.fillStyle = fillColor;
+		ctx.strokeStyle = strokeColor;
+		ctx.rect(rect.x, rect.y, rect.width, rect.height);
+		ctx.fill();
+	}
+	
+	
+	//Decides what happens when to clear the screen
+	function ClearScreen(/*String*/color)
+	{
+		ctx.clearRect(0,0,canvas.width,canvas.height)	
+		DrawRect(new Rectangle(0,0,canvas.width,canvas.height), color, color	)
+	}
+	
+
+	//Code to be ran every "frame" (i lied not every frame but cloes to what it would be at 60fps)
+	function Update()
+	{
+		//updates the uptime
+		timer += 0.016;	
+		//uhh the movement code and whatnot---
+		if (state.keys.s)
+		{
+			y1 += moveSpeed;
+		}
+		if (state.keys.w)
+		{
+			y1 -= moveSpeed;
+		}
+		if (state.keys.k)
+		{
+			y2 += moveSpeed;
+		}
+		if (state.keys.i)
+		{
+			y2 -= moveSpeed;
+		}
+		//---
+		
+		//prevents the paddles from going out of bounds---
+		if(y1 < 0)
+			y1 = 0;
+		if(y2 < 0)
+			y2 = 0;				
+		if(y1 > canvas.height - 30)
+			y1 = canvas.height - 30;
+		if(y2 > canvas.height - 30)
+			y2 = canvas.height - 30;
+		//---
+		
+		//moves the ball---
+		ball.rect.x += 4  * ball.xDir;
+		ball.rect.y += 5 * ball.yDir;
+		//---
+		
+		//checks if the ball hits the side of the screen
+		if(ball.rect.x <= 0)
+		{
+			ball.xDir = 1;
+			ball.rect.x = 0;
+			//gives the right side a point
+			rs++;
+		}
+		
+		if(ball.rect.x >= canvas.width - 5){	
+			ball.xDir = -1;	
+			ball.rect.x = canvas.width - 5;
+			//gives the left side a point
+			ls++;
+		}
+		//---
+		
+		//bounces the ball when it hits the floor---
+		if(ball.rect.y >= canvas.height - 5){
+			ball.rect.y = canvas.height - 5;
+			ball.yDir = -1;
+		}
+		//---
+		//bounces the ball when if hits the roof---
+		if(ball.rect.y <= 0){
+			ball.yDir = 1;
+			ball.rect.y = 0;
+		}
+		//---
+		
+		//The left paddle collision--- 
+		if(RectVsRect(ball.rect, new Rectangle(15, y1, 20, 30)))
+		{
+			ball.xDir = 1;
+		}
+		//---
+		
+		//the right paddle collision---
+		if(RectVsRect(ball.rect, new Rectangle(canvas.width - 30 - 5, y2, 20, 30)))
+		{
+			ball.xDir = -1;
+		}
+		//--
+	}
+	
+	//Draws the stuff to the screen
+	function Draw()
+	{
+		//removes everything and replaces it with a black screen 
+		ClearScreen("black");
+		
+		//draws the game's uptime---
+		ctx.font = "12px Arial";
+		ctx.fillStyle = "white";
+		ctx.fillText(Math.round(timer), 5, 15);
+		//---
+		
+		//displays the left score---
+		ctx.font = "60px Arial";
+		ctx.fillStyle = "white";
+		ctx.fillText(ls.toString(), (canvas.width/2)/2, 80);
+		//---
+		
+		//displays the right score---
+		ctx.font = "60px Arial";
+		ctx.fillStyle = "white";
+		ctx.fillText(rs.toString(), (canvas.width*.64), 80);
+		//---
+		
+		//draws the line in the middle of the screen
+		DrawRect(new Rectangle(canvas.width / 2 - (5/2), 0, 5, canvas.height))
+		
+		//draws the left paddle
+		DrawRect(new Rectangle(30, y1, 5, 30))
+		
+		//draws the right paddle
+		DrawRect(new Rectangle(canvas.width - 30 - 5, y2, 5, 30))
+		
+		//draws the ball
+		DrawRect(ball.rect)
+	}
+	
+	//idk not my code ---
+	// key handler
+	var keyHandler = function (e) {
+   	// toggle a boolean for the key
+   	state.keys[e.key] = e.type === 'keyup' ? false : true;
+	};
+	// attach event handler
+	window.addEventListener('keydown', keyHandler);
+	window.addEventListener('keyup', keyHandler);
+	//---
+	
+	
+	//makes it so mainh will be every every 23 something (milliseconds maybe)
+	var e = setInterval(Main,23);
+	
+	//handles calling the update and draw
+	function Main()
+	{
+		//calls the update
+		Update();
+		//calls the drawing
+		Draw();
+	}
+
+	//writes words to my "console"
+	function Log(/*Object/String*/newLineText)
+	{
+		if(consoleItems >= 1000)
+		{
+			document.getElementById("ActionConsole").innerHTML = " ";
+			consoleItems = 0;
+		}
+	
+		consoleItems++;
+	
+   	document.getElementById("ActionConsole").innerHTML = "<li>" + newLineText + "</li>" + document.getElementById("ActionConsole").innerHTML;
+	}
+
+	
+</script>
+	
+</html>
